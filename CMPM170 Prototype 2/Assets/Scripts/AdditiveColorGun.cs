@@ -10,10 +10,12 @@ public class AdditiveColorGun : MonoBehaviour
 
     private void Start()
     {
-        if (gunRenderer == null) {
+        if (gunRenderer == null)
+        {
             Debug.LogError("Gun Renderer is not assigned in the inspector.");
         }
-        else {
+        else
+        {
             // Ensure the gun has its own unique material instance
             gunRenderer.material = new Material(gunRenderer.material);
             gunRenderer.material.SetColor("_Color", currentGunColor); // Directly setting Albedo color
@@ -29,36 +31,38 @@ public class AdditiveColorGun : MonoBehaviour
             RaycastHit hit;
 
             // Perform a raycast to detect the clicked object
-            if (Physics.Raycast(ray, out hit)) {
+            if (Physics.Raycast(ray, out hit))
+            {
                 Renderer objectRenderer = hit.collider.GetComponent<Renderer>();
 
                 // Check if the clicked object has a Renderer and a material with color
-                if (objectRenderer != null && objectRenderer.material != null) {
+                if (objectRenderer != null && objectRenderer.material != null)
+                {
                     Color objectColor = objectRenderer.material.color;
                     Debug.Log("Object Color: " + objectColor);
 
                     // Add the object's color to the list of absorbed colors
                     absorbedColors.Add(objectColor);
 
-                    // Sum all absorbed colors (to reduce gun color)
-                    currentGunColor = Color.white; // Start from white before subtracting
-                    foreach (Color color in absorbedColors) {
-                        currentGunColor -= color; // Reduce the color values
+                    // Calculate weighted average color
+                    Color weightedColor = Color.black;
+                    float totalWeight = 0f;
+
+                    for (int i = 0; i < absorbedColors.Count; i++)
+                    {
+                        float weight = i + 1; // Increasing weight for each absorbed color
+                        weightedColor += absorbedColors[i] * weight;
+                        totalWeight += weight;
                     }
 
-                    // Ensure color values don't go below black
-                    currentGunColor = new Color(
-                        Mathf.Clamp(currentGunColor.r, 0, 1),
-                        Mathf.Clamp(currentGunColor.g, 0, 1),
-                        Mathf.Clamp(currentGunColor.b, 0, 1)
-                    );
+                    currentGunColor = weightedColor / totalWeight; // Calculate weighted average
 
                     // Update the gun's Albedo color directly using "_Color"
                     gunRenderer.material.SetColor("_Color", currentGunColor);
                     Debug.Log("Updated Gun Color: " + gunRenderer.material.GetColor("_Color"));
 
                     // Set the object's color to white after absorption
-                    objectRenderer.material.color = Color.white;
+                    objectRenderer.material.color = Color.black;
                     Debug.Log("Object Color after Absorption: " + objectRenderer.material.color);
                 }
             }
